@@ -1,0 +1,78 @@
+import bcrypt
+import multiprocessing as mp 
+from nltk.corpus import words
+import time
+import sys
+
+length = 1000
+# word_list = words.words()[:length]
+word_list = words.words()
+
+# print(word_list)
+
+word = ''
+# print(word, word_list.index(word)) 
+
+password = word.encode()
+salt = bcrypt.gensalt(8)
+hashed = bcrypt.hashpw(password, salt)
+
+hashed = b'$2b$08$J9FW66ZdPI2nrIMcOxFYI.q2PW6mqALUl2/uFvV9OFNPmHGNPa6YC'
+
+def load_word_list(file_name):
+    with open(file_name, "r") as file:
+        word_list = [line.strip() for line in file]
+    return word_list
+
+# Check that an unencrypted password matches one that has
+# previously been hashed
+def check_password(hashed, word_list, start, end, start_time):
+    for i in range(start, end):
+            word = word_list[i]
+            if 6 <= len(word) <= 10:
+                encoded_word = word.encode()
+                if bcrypt.hashpw(encoded_word, hashed) == hashed:
+                    password.append(word)
+                    end = time.time()
+                    print("password is: ", word, "Time taken: ", start_time - end)
+                    return word
+    return None
+	
+
+# start_time = time.time()
+# print(check_password(hashed, word_list, 0, length))
+# end_time = time.time()
+# total_time = end_time - start_time
+# print("Total time taken:", total_time, "seconds")
+# sys.exit(-1) 
+
+if __name__ == "__main__":
+    
+	print("starts at", time.time())
+	file_name = "words.txt"
+    word_list = load_word_list(file_name)
+	print("ends at", time.time())
+
+    num_processes = mp.cpu_count()  # Get the number of CPU cores
+    chunk_size = len(word_list) // num_processes  # Divide word list into chunks
+    processes = []
+	
+    start_time = time.time()
+    password = [] 
+    for i in range(num_processes):
+        start = i * chunk_size
+        end = start + chunk_size if i < num_processes - 1 else len(word_list)
+        process = mp.Process(target=check_password, args=(hashed, word_list, start, end, start_time))
+        processes.append(process)
+
+    for process in processes:
+        process.start()
+    
+    for process in processes:
+        process.join()
+    
+    end_time = time.time()
+    total_time = end_time - start_time
+    
+    print("Total time taken:", total_time, "seconds", "password is:" , password)
+    
